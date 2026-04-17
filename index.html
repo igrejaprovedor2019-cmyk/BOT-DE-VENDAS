@@ -1,26 +1,25 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Dashboard GBZ</title>
+    <title>Dashboard Sirius Maker</title>
     <style>
-        body { background: #0a0a0b; color: #fff; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .box { background: #151517; padding: 30px; border-radius: 15px; width: 350px; border: 1px solid #222; }
-        input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #333; background: #000; color: #fff; box-sizing: border-box; }
-        button { width: 100%; padding: 15px; background: #00ff6a; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        button:hover { background: #00d659; transform: scale(1.02); }
-        h2 { text-align: center; color: #00ff6a; margin-top: 0; }
+        body { background: #0b0b0c; color: #fff; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: #151517; padding: 40px; border-radius: 20px; width: 380px; border: 1px solid #222; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        h1 { text-align: center; color: #00ff6a; margin-bottom: 25px; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #333; background: #000; color: #fff; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; background: #00ff6a; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 10px; }
+        #s { text-align: center; margin-top: 15px; font-size: 14px; color: #00ff6a; }
     </style>
 </head>
 <body>
-    <div class="box">
-        <h2>SIRIUS CONFIG</h2>
+    <div class="card">
+        <h1>SIRIUS MAKER</h1>
         <input type="text" id="t" placeholder="Token do Bot">
         <input type="text" id="n" placeholder="Nome da Loja">
         <input type="text" id="p" placeholder="Chave PIX">
-        <input type="text" id="b" placeholder="URL do Banner (Fim .png ou .jpg)">
-        <button onclick="ligar()">ATIVAR BOT AGORA</button>
-        <p id="s" style="text-align:center; font-size:12px; margin-top:10px;"></p>
+        <input type="text" id="b" placeholder="URL do Banner">
+        <button onclick="ligar()">LIGAR BOT AGORA</button>
+        <div id="s"></div>
     </div>
     <script>
         async function ligar() {
@@ -37,7 +36,7 @@
                 })
             });
             const data = await res.json();
-            s.innerText = data.msg ? "✅ " + data.msg : "❌ Erro";
+            s.innerText = data.msg || "Erro!";
         }
     </script>
 </body>
