@@ -2,42 +2,61 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Painel Sirius Maker</title>
+    <title>Painel gbz criator Pro</title>
     <style>
-        body { font-family: 'Inter', sans-serif; background: #0f0f10; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .container { background: #161618; padding: 40px; border-radius: 15px; width: 380px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #222; text-align: center; }
-        h1 { color: #00c853; margin-bottom: 5px; }
-        input { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #333; background: #0a0a0b; color: white; box-sizing: border-box; outline: none; }
-        button { width: 100%; padding: 14px; background: #00c853; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        button:hover { background: #00e676; }
-        #log { margin-top: 20px; font-size: 14px; }
+        body { font-family: 'Inter', sans-serif; background: #0f0f10; color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .container { background: #161618; padding: 30px; border-radius: 15px; width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #222; }
+        h1 { color: #00c853; text-align: center; margin-bottom: 20px; }
+        label { font-size: 12px; color: #888; margin-left: 5px; }
+        input { width: 100%; padding: 12px; margin: 8px 0 15px 0; border-radius: 8px; border: 1px solid #333; background: #0a0a0b; color: white; box-sizing: border-box; outline: none; }
+        input:focus { border-color: #00c853; }
+        button { width: 100%; padding: 14px; background: #00c853; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; margin-top: 10px; }
+        button:hover { background: #00e676; transform: translateY(-2px); }
+        #log { margin-top: 20px; text-align: center; font-size: 14px; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Sirius Maker</h1>
-        <p>Ative seu sistema profissional</p>
-        <input type="text" id="token" placeholder="Token do Bot">
-        <input type="text" id="nomeLoja" placeholder="Nome da Loja">
-        <button onclick="ligar()">ATIVAR BOT</button>
+        
+        <label>TOKEN DO BOT</label>
+        <input type="text" id="token" placeholder="Cole o token do Discord Developer Portal">
+        
+        <label>NOME DA LOJA</label>
+        <input type="text" id="nomeLoja" placeholder="Ex: Sirius Store">
+        
+        <label>CHAVE PIX</label>
+        <input type="text" id="pix" placeholder="Sua chave PIX para receber">
+        
+        <label>URL DA IMAGEM (BANNER)</label>
+        <input type="text" id="banner" placeholder="Link da imagem (Imgur)">
+        
+        <button onclick="ligarBot()">ATIVAR SISTEMA PROFISSIONAL</button>
         <div id="log"></div>
     </div>
+
     <script>
-        async function ligar() {
-            const token = document.getElementById('token').value;
-            const nomeLoja = document.getElementById('nomeLoja').value;
+        async function ligarBot() {
+            const data = {
+                token: document.getElementById('token').value,
+                nomeLoja: document.getElementById('nomeLoja').value,
+                pix: document.getElementById('pix').value,
+                banner: document.getElementById('banner').value
+            };
+            
             const log = document.getElementById('log');
-            log.innerText = "⏳ Conectando e registrando comandos...";
+            log.innerText = "⏳ Configurando Bot...";
+
             try {
-                const res = await fetch('/ligar-bot', {
+                const response = await fetch('/ligar-bot', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ token, nomeLoja })
+                    body: JSON.stringify(data)
                 });
-                const data = await res.json();
-                log.innerText = data.msg || data.erro;
-                log.style.color = data.erro ? "red" : "#00c853";
-            } catch (e) { log.innerText = "Erro ao conectar."; }
+                const resData = await response.json();
+                log.innerText = resData.msg || resData.erro;
+                log.style.color = resData.erro ? "#ff5252" : "#00c853";
+            } catch (err) { log.innerText = "Erro na conexão!"; }
         }
     </script>
 </body>
