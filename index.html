@@ -2,97 +2,62 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sirius Maker | Painel de Ativação</title>
+    <title>Sirius Maker | Dashboard</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
-        
-        body { font-family: 'Inter', sans-serif; background: #0b0b0c; color: #ffffff; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
-        .card { background: #151517; padding: 40px; border-radius: 20px; width: 100%; max-width: 450px; border: 1px solid #222; box-shadow: 0 10px 50px rgba(0,0,0,0.6); }
-        h1 { text-align: center; color: #00ff6a; font-weight: 800; margin-bottom: 10px; font-size: 28px; }
-        p { text-align: center; color: #888; font-size: 14px; margin-bottom: 30px; }
-        
-        .field { margin-bottom: 20px; }
-        label { display: block; font-size: 12px; color: #666; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
-        input { width: 100%; padding: 14px; background: #0c0c0d; border: 1px solid #28282a; border-radius: 10px; color: #fff; font-size: 15px; box-sizing: border-box; outline: none; transition: 0.3s; }
-        input:focus { border-color: #00ff6a; box-shadow: 0 0 10px rgba(0, 255, 106, 0.1); }
-        
-        button { width: 100%; padding: 16px; background: #00ff6a; color: #000; border: none; border-radius: 12px; font-weight: 800; font-size: 16px; cursor: pointer; transition: 0.3s; margin-top: 10px; text-transform: uppercase; }
-        button:hover { background: #00d659; transform: translateY(-2px); box-shadow: 0 5px 20px rgba(0, 255, 106, 0.2); }
-        
-        #status { margin-top: 25px; text-align: center; font-size: 14px; font-weight: 600; min-height: 20px; }
-        .success { color: #00ff6a; }
-        .error { color: #ff4747; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { background: #080809; color: #fff; font-family: 'Inter', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { background: #111113; padding: 40px; border-radius: 24px; width: 400px; border: 1px solid #1f1f22; box-shadow: 0 20px 40px rgba(0,0,0,0.8); }
+        h1 { text-align: center; color: #00ff6a; font-weight: 900; letter-spacing: -1px; margin-bottom: 5px; }
+        p { text-align: center; color: #555; font-size: 14px; margin-bottom: 30px; }
+        .input-group { margin-bottom: 18px; }
+        label { display: block; color: #aaa; font-size: 11px; text-transform: uppercase; margin-bottom: 6px; font-weight: 700; }
+        input { width: 100%; padding: 14px; background: #080809; border: 1px solid #222; border-radius: 12px; color: #fff; box-sizing: border-box; transition: 0.3s; }
+        input:focus { border-color: #00ff6a; outline: none; box-shadow: 0 0 15px rgba(0,255,106,0.15); }
+        button { width: 100%; padding: 16px; background: #00ff6a; color: #000; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        button:hover { background: #00cc55; transform: scale(1.02); }
+        #status { text-align: center; margin-top: 20px; font-weight: 700; font-size: 14px; }
     </style>
 </head>
 <body>
-    <div class="card">
+    <div class="container">
         <h1>SIRIUS MAKER</h1>
-        <p>Ative seu bot profissional de vendas</p>
-        
-        <div class="field">
-            <label>Token do Bot</label>
-            <input type="text" id="token" placeholder="Insira o Token do Bot">
+        <p>Ativação de Sistema de Vendas Pro</p>
+        <div class="input-group">
+            <label>Bot Token</label>
+            <input type="text" id="token" placeholder="Token do Developer Portal">
         </div>
-        
-        <div class="field">
+        <div class="input-group">
             <label>Nome da Loja</label>
-            <input type="text" id="nomeLoja" placeholder="Ex: GBZ Store">
+            <input type="text" id="nome" placeholder="Ex: GBZ Store">
         </div>
-        
-        <div class="field">
+        <div class="input-group">
             <label>Chave PIX</label>
-            <input type="text" id="pix" placeholder="E-mail, Celular ou CPF">
+            <input type="text" id="pix" placeholder="E-mail ou CPF">
         </div>
-        
-        <div class="field">
-            <label>Link do Banner (URL)</label>
-            <input type="text" id="banner" placeholder="Link da imagem (Ex: Imgur)">
+        <div class="input-group">
+            <label>URL do Banner</label>
+            <input type="text" id="banner" placeholder="Link .png ou .jpg">
         </div>
-        
-        <button onclick="ativarBot()">Ativar Bot Agora</button>
+        <button onclick="ligar()">LIGAR SISTEMA AGORA</button>
         <div id="status"></div>
     </div>
-
     <script>
-        async function ativarBot() {
+        async function ligar() {
             const status = document.getElementById('status');
-            const data = {
-                token: document.getElementById('token').value.trim(),
-                nomeLoja: document.getElementById('nomeLoja').value.trim(),
-                pix: document.getElementById('pix').value.trim(),
-                banner: document.getElementById('banner').value.trim()
-            };
-
-            if (!data.token) {
-                status.className = "error";
-                status.innerText = "❌ O Token é obrigatório!";
-                return;
-            }
-
-            status.className = "";
-            status.innerText = "⏳ Ligando bot... aguarde.";
-
-            try {
-                const response = await fetch('/ligar-bot', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                
-                const res = await response.json();
-                
-                if (res.msg) {
-                    status.className = "success";
-                    status.innerText = "✅ " + res.msg + " Verifique seu Discord.";
-                } else {
-                    status.className = "error";
-                    status.innerText = "❌ " + (res.erro || "Erro ao ligar.");
-                }
-            } catch (err) {
-                status.className = "error";
-                status.innerText = "❌ Erro na conexão com o servidor.";
-            }
+            status.innerText = "⏳ Conectando...";
+            const res = await fetch('/ligar-bot', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    token: document.getElementById('token').value,
+                    nomeLoja: document.getElementById('nome').value,
+                    pix: document.getElementById('pix').value,
+                    banner: document.getElementById('banner').value
+                })
+            });
+            const data = await res.json();
+            status.innerText = data.msg ? "✅ " + data.msg : "❌ Erro ao ligar";
+            status.style.color = data.msg ? "#00ff6a" : "#ff4444";
         }
     </script>
 </body>
