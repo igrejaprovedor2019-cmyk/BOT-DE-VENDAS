@@ -1,49 +1,64 @@
 const express = require('express');
-const { Client, GatewayIntentBits } = require('discord.js');
+const { Client, GatewayIntentBits, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, StringSelectMenuBuilder } = require('discord.js');
 const app = express();
-const path = require('path');
 
 app.use(express.json());
 
-// Armazena os bots ativos em memória
-const botsAtivos = {};
+// CONFIGURAÇÕES INICIAIS (O usuário pode mudar via !configurar depois)
+let configBot = {
+    pix: "SUA_CHAVE_AQUI",
+    imagemBanner: "https://i.imgur.com/vWb6XyS.png", // Link da imagem do topo
+    cor: "#2b2d31"
+};
 
-// Rota para o site (Frontend)
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
+app.get('/', (req, res) => res.send("O Bot de Vendas está ONLINE no Render!"));
 
-// Rota que o site chama para ligar o bot
 app.post('/ligar-bot', async (req, res) => {
     const { token, nomeLoja } = req.body;
-
-    if (!token) return res.status(400).send({ erro: "Token inválido" });
-
     try {
-        const client = new Client({
-            intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent]
-        });
+        const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 
-        client.on('ready', () => {
-            console.log(`Bot ${client.user.tag} está online!`);
-            botsAtivos[token] = client;
-        });
-
-        // Lógica básica de venda/resposta
-        client.on('messageCreate', (msg) => {
+        client.on('messageCreate', async (msg) => {
             if (msg.author.bot) return;
-            if (msg.content === '!loja') {
-                msg.reply(`Bem-vindo à **${nomeLoja}**! Temos itens de Blox Fruits disponíveis.`);
+
+            // COMANDO !VENDAS (O PAINEL DA FOTO)
+            if (msg.content === '!vendas') {
+                const embedVendas = new EmbedBuilder()
+                    .setTitle(`Combo Contas Baratas - ${nomeLoja}`)
+                    .setImage(configBot.imagemBanner)
+                    .setDescription(`📌 Nesta seção, você encontrará apenas contas baratas com itens bons.\n🎮 Contas com diversas variedades de itens e frutas no Blox Fruits.\n\n**Entenda as siglas:**\n\n**GOD:** 🔱 God Human\n**CDK:** ⚔️ Cursed Dual Katana\n**TTK:** 🗡️ True Triple Katana\n**SG:** 🎸 Soul Guitar\n**SA:** ⚓ Shark Anchor\n**VH:** 🎭 Valkyrie Helm\n**NF:** 🥛 Mirror Fractal\n\n🖱️ Clique no botão abaixo e escolha sua conta!\n📌 Não esqueça de ler a descrição com atenção.`)
+                    .setFooter({ text: 'A partir de R$ 4,99 | Clique no botão "Ver Opções"' })
+                    .setColor(configBot.cor);
+
+                const botao = new ActionRowBuilder().addComponents(
+                    new ButtonBuilder().setCustomId('ver_opcoes').setLabel('Ver Opções').setStyle(ButtonStyle.Success)
+                );
+
+                await msg.channel.send({ embeds: [embedVendas], components: [botao] });
+            }
+
+            // COMANDO !CHAVE
+            if (msg.content === '!chave') {
+                msg.reply(`💰 Minha chave PIX é: \`${configBot.pix}\`\nApós pagar, envie o comprovante!`);
+            }
+
+            // COMANDO !CONFIGURAR
+            if (msg.content === '!configurar') {
+                msg.reply({ content: "⚙️ **Painel de Configuração Privado**\nUse `!setpix CHAVE` para mudar o pix ou `!setbanner LINK` para a imagem.", ephemeral: true });
+            }
+        });
+
+        // LÓGICA DO BOTÃO "VER OPÇÕES"
+        client.on('interactionCreate', async (i) => {
+            if (!i.isButton()) return;
+            if (i.customId === 'ver_opcoes') {
+                await i.reply({ content: "🛒 **PRODUTOS:**\n1️⃣ Conta Level Max + CDK: R$ 10,00\n2️⃣ Conta GodHuman + Soul Guitar: R$ 15,00\n\nPara comprar, use `!chave`", ephemeral: true });
             }
         });
 
         await client.login(token);
-        res.send({ status: "Sucesso!", msg: `Bot ${nomeLoja} ligado!` });
-
-    } catch (err) {
-        res.status(500).send({ erro: "Falha ao ligar o bot. Verifique o Token." });
-    }
+        res.send({ status: "Sucesso" });
+    } catch (e) { res.status(500).send({ erro: e.message }); }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Site rodando na porta ${PORT}`));
+app.listen(process.env.PORT || 3000);
