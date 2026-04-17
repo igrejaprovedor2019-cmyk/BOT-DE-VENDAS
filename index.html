@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Criador de Bot de Vendas</title>
+    <style>
+        body { font-family: sans-serif; background: #2c2f33; color: white; display: flex; justify-content: center; padding: 50px; }
+        .card { background: #23272a; padding: 20px; border-radius: 8px; width: 350px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        input { width: 100%; padding: 10px; margin: 10px 0; border-radius: 4px; border: none; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background: #7289da; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #5b70be; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Configurar meu Bot</h2>
+    <input type="text" id="token" placeholder="Insira o Token do Bot">
+    <input type="text" id="nomeLoja" placeholder="Nome da sua Loja">
+    <button onclick="ligarBot()">ATIVAR MEU BOT</button>
+    <p id="status"></p>
+</div>
+
+<script>
+    async function ligarBot() {
+        const token = document.getElementById('token').value;
+        const nomeLoja = document.getElementById('nomeLoja').value;
+        const status = document.getElementById('status');
+
+        status.innerText = "Conectando...";
+
+        const response = await fetch('/ligar-bot', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token, nomeLoja })
+        });
+
+        const data = await response.json();
+        if(data.erro) {
+            status.style.color = "red";
+            status.innerText = data.erro;
+        } else {
+            status.style.color = "green";
+            status.innerText = data.msg;
+        }
+    }
+</script>
+
+</body>
+</html>
