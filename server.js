@@ -5,51 +5,49 @@ const {
     ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle 
 } = require('discord.js');
 const app = express();
-
 app.use(express.json());
 
-// Banco de dados em memória com as siglas que você usa
 let db = {
-    config: { nome: "GBZ Store", pix: "A definir", banner: "https://i.imgur.com/vWb6XyS.png" },
+    config: { nome: "Loja Sirius", pix: "A definir", banner: "https://i.imgur.com/vWb6XyS.png" },
     estoque: []
 };
 
-app.get('/', (req, res) => res.send("Bot Online no Render!"));
+app.get('/', (req, res) => res.sendFile(__dirname + '/index.html'));
 
 app.post('/ligar-bot', async (req, res) => {
     const { token, nomeLoja, pix, banner } = req.body;
-    db.config = { nome: nomeLoja || "GBZ Store", pix: pix || "A definir", banner: banner || "https://i.imgur.com/vWb6XyS.png" };
+    db.config = { nome: nomeLoja, pix: pix, banner: banner };
 
     const client = new Client({ intents: [3276799] });
 
     client.on('ready', async () => {
         const commands = [
-            new SlashCommandBuilder().setName('vendas').setDescription('Envia o painel de vendas'),
-            new SlashCommandBuilder().setName('configurar').setDescription('Gerenciar estoque e bot')
+            new SlashCommandBuilder().setName('vendas').setDescription('Postar painel de vendas'),
+            new SlashCommandBuilder().setName('configurar').setDescription('Gerenciar estoque e loja')
         ].map(c => c.toJSON());
-
         const rest = new REST({ version: '10' }).setToken(token);
         await rest.put(Routes.applicationCommands(client.user.id), { body: commands });
+        console.log("Sistema Online");
     });
 
     client.on('interactionCreate', async (i) => {
-        // --- PAINEL DE VENDAS ---
+        // PAINEL DE VENDAS
         if (i.commandName === 'vendas') {
             const embed = new EmbedBuilder()
                 .setTitle(`Combo Contas Baratas - ${db.config.nome}`)
                 .setImage(db.config.banner)
                 .setColor("#2b2d31")
-                .setDescription(`📌 Nesta seção, você encontrará apenas contas baratas com itens bons.\n🎮 Contas com diversas variedades de itens e frutas.\n\n**Siglas:**\nGOD: 🔱 | CDK: ⚔️ | SG: 🎸 | SA: ⚓\n\n🖱️ Clique no menu abaixo e escolha sua conta!`);
+                .setDescription(`📌 **Produtos de alta qualidade.**\n\n**Siglas:**\nGOD: 🔱 | CDK: ⚔️ | SG: 🎸 | SA: ⚓\n\n🖱️ Escolha no menu:`);
 
-            if (db.estoque.length === 0) return i.reply({ content: "❌ Adicione itens no `/configurar` primeiro!", ephemeral: true });
+            if (db.estoque.length === 0) return i.reply({ content: "Estoque vazio!", ephemeral: true });
 
             const row = new ActionRowBuilder().addComponents(
                 new StringSelectMenuBuilder()
-                    .setCustomId('comprar_item')
-                    .setPlaceholder('🛒 Clique aqui para ver as opções')
+                    .setCustomId('comprar')
+                    .setPlaceholder('🛒 Selecione um produto...')
                     .addOptions(db.estoque.map((item, index) => ({
                         label: item.nome,
-                        description: `R$ ${item.preco} | Estoque: ${item.qtd}`,
+                        description: `Preço: R$ ${item.preco}`,
                         value: `item_${index}`,
                         emoji: item.emoji
                     })))
@@ -57,84 +55,63 @@ app.post('/ligar-bot', async (req, res) => {
             await i.reply({ embeds: [embed], components: [row] });
         }
 
-        // --- SISTEMA DE TICKET (O BEM FEITO) ---
-        if (i.isStringSelectMenu() && i.customId === 'comprar_item') {
-            const index = i.values[0].split('_')[1];
-            const item = db.estoque[index];
-
+        // CRIAÇÃO DE TICKET BEM FEITA
+        if (i.isStringSelectMenu() && i.customId === 'comprar') {
+            const item = db.estoque[i.values[0].split('_')[1]];
             const canal = await i.guild.channels.create({
                 name: `🛒-${i.user.username}`,
                 type: ChannelType.GuildText,
                 permissionOverwrites: [
                     { id: i.guild.id, deny: [PermissionFlagsBits.ViewChannel] },
-                    { id: i.user.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.AttachFiles] }
+                    { id: i.user.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] }
                 ]
             });
 
             const embedTicket = new EmbedBuilder()
                 .setTitle(`💳 Pagamento - ${item.nome}`)
-                .setColor("#2ecc71")
-                .setDescription(`Olá ${i.user}, você selecionou um produto de alta qualidade.\n\n💵 **Valor:** R$ ${item.preco}\n🔑 **PIX:** \`${db.config.pix}\`\n\n**Instruções:**\n1️⃣ Copie a chave acima.\n2️⃣ Pague no seu banco.\n3️⃣ Envie o comprovante aqui!\n\n*Sistema Automático ${db.config.nome}*`);
+                .setColor("#00ff6a")
+                .setDescription(`Olá ${i.user}!\n\n💵 **Valor:** R$ ${item.preco}\n🔑 **PIX:** \`${db.config.pix}\`\n\nEnvie o comprovante neste chat para entrega.`);
 
-            const btnFechar = new ActionRowBuilder().addComponents(
-                new ButtonBuilder().setCustomId('fechar_ticket').setLabel('Fechar Ticket').setStyle(ButtonStyle.Danger)
+            const btnRow = new ActionRowBuilder().addComponents(
+                new ButtonBuilder().setCustomId('fechar').setLabel('Fechar Ticket').setStyle(ButtonStyle.Danger)
             );
 
-            await canal.send({ content: `${i.user}`, embeds: [embedTicket], components: [btnFechar] });
+            await canal.send({ content: `${i.user}`, embeds: [embedTicket], components: [btnRow] });
 
-            // Botão de redirecionamento imediato
-            const rowIr = new ActionRowBuilder().addComponents(
+            const irPara = new ActionRowBuilder().addComponents(
                 new ButtonBuilder().setLabel('Ir para o Ticket').setStyle(ButtonStyle.Link).setURL(`https://discord.com/channels/${i.guild.id}/${canal.id}`)
             );
-            await i.reply({ content: `✅ Ticket criado com sucesso em ${canal}!`, components: [rowIr], ephemeral: true });
+            await i.reply({ content: `✅ Canal criado: ${canal}`, components: [irPara], ephemeral: true });
         }
 
-        // --- PAINEL DE CONFIGURAÇÃO ---
+        // PAINEL DE CONFIGURAÇÃO (MODAL)
         if (i.commandName === 'configurar') {
-            const embedConfig = new EmbedBuilder()
-                .setTitle("⚙️ Painel de Gestão Sirius")
-                .setDescription("Gerencie o conteúdo da sua loja diretamente por aqui.")
-                .addFields(
-                    { name: "Itens no Estoque", value: `${db.estoque.length}`, inline: true },
-                    { name: "Chave PIX", value: `\`${db.config.pix}\``, inline: true }
-                );
-
-            const row = new ActionRowBuilder().addComponents(
-                new ButtonBuilder().setCustomId('add_estoque').setLabel('Adicionar Item').setStyle(ButtonStyle.Success),
-                new ButtonBuilder().setCustomId('limpar_estoque').setLabel('Limpar Tudo').setStyle(ButtonStyle.Danger)
+            const btnRow = new ActionRowBuilder().addComponents(
+                new ButtonBuilder().setCustomId('add_prod').setLabel('Adicionar Produto').setStyle(ButtonStyle.Success),
+                new ButtonBuilder().setCustomId('limpar').setLabel('Limpar Estoque').setStyle(ButtonStyle.Danger)
             );
-
-            await i.reply({ embeds: [embedConfig], components: [row], ephemeral: true });
+            await i.reply({ content: "⚙️ **Gestão de Estoque**", components: [btnRow], ephemeral: true });
         }
 
-        // --- MODAL PARA ADICIONAR ITEM ---
-        if (i.isButton() && i.customId === 'add_estoque') {
-            const modal = new ModalBuilder().setCustomId('modal_add').setTitle('Adicionar Produto');
-            const nomeInput = new TextInputBuilder().setCustomId('nome').setLabel("Nome do Item").setStyle(TextInputStyle.Short).setRequired(true);
-            const precoInput = new TextInputBuilder().setCustomId('preco').setLabel("Preço (Ex: 9.99)").setStyle(TextInputStyle.Short).setRequired(true);
-            const qtdInput = new TextInputBuilder().setCustomId('qtd').setLabel("Quantidade em Estoque").setStyle(TextInputStyle.Short).setRequired(true);
-            const emojiInput = new TextInputBuilder().setCustomId('emoji').setLabel("Emoji (Ex: ⚔️)").setStyle(TextInputStyle.Short).setRequired(true);
-
-            modal.addComponents(new ActionRowBuilder().addComponents(nomeInput), new ActionRowBuilder().addComponents(precoInput), new ActionRowBuilder().addComponents(qtdInput), new ActionRowBuilder().addComponents(emojiInput));
+        if (i.isButton() && i.customId === 'add_prod') {
+            const modal = new ModalBuilder().setCustomId('modal_item').setTitle('Novo Produto');
+            const n = new TextInputBuilder().setCustomId('n').setLabel("Nome").setStyle(TextInputStyle.Short).setRequired(true);
+            const p = new TextInputBuilder().setCustomId('p').setLabel("Preço").setStyle(TextInputStyle.Short).setRequired(true);
+            const e = new TextInputBuilder().setCustomId('e').setLabel("Emoji").setStyle(TextInputStyle.Short).setRequired(true);
+            modal.addComponents(new ActionRowBuilder().addComponents(n), new ActionRowBuilder().addComponents(p), new ActionRowBuilder().addComponents(e));
             await i.showModal(modal);
         }
 
-        if (i.isModalSubmit() && i.customId === 'modal_add') {
-            db.estoque.push({
-                nome: i.fields.getTextInputValue('nome'),
-                preco: i.fields.getTextInputValue('preco'),
-                qtd: i.fields.getTextInputValue('qtd'),
-                emoji: i.fields.getTextInputValue('emoji')
-            });
-            await i.reply({ content: "✅ Produto adicionado ao estoque!", ephemeral: true });
+        if (i.isModalSubmit() && i.customId === 'modal_item') {
+            db.estoque.push({ nome: i.fields.getTextInputValue('n'), preco: i.fields.getTextInputValue('p'), emoji: i.fields.getTextInputValue('e') });
+            await i.reply({ content: "✅ Adicionado!", ephemeral: true });
         }
 
-        if (i.isButton() && i.customId === 'fechar_ticket') await i.channel.delete();
-        if (i.isButton() && i.customId === 'limpar_estoque') { db.estoque = []; await i.reply({ content: "🧹 Estoque limpo!", ephemeral: true }); }
+        if (i.isButton() && i.customId === 'fechar') await i.channel.delete();
+        if (i.isButton() && i.customId === 'limpar') { db.estoque = []; await i.reply({ content: "Estoque limpo!", ephemeral: true }); }
     });
 
     await client.login(token);
-    res.send({ msg: "Bot Online!" });
+    res.send({ msg: "Bot Ligado com Sucesso!" });
 });
-
 app.listen(process.env.PORT || 3000);
