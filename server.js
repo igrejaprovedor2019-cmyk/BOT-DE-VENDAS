@@ -8,7 +8,7 @@ const app = express();
 app.use(express.json());
 
 let db = {
-    config: { nome: "Sua Loja", pix: "Não definido", banner: "https://i.imgur.com/vWb6XyS.png" },
+    config: { nome: "GBZ Store", pix: "Chave PIX aqui", banner: "https://i.imgur.com/vWb6XyS.png" },
     estoque: []
 };
 
@@ -22,99 +22,49 @@ app.post('/ligar-bot', async (req, res) => {
 
     client.on('ready', async () => {
         const commands = [
-            new SlashCommandBuilder().setName('vendas').setDescription('Envia o painel de vendas premium'),
-            new SlashCommandBuilder().setName('gerenciar').setDescription('Painel de gestão total')
+            new SlashCommandBuilder().setName('vendas').setDescription('Postar painel de vendas'),
+            new SlashCommandBuilder().setName('gerenciar').setDescription('Configurar bot e estoque')
         ].map(c => c.toJSON());
         const rest = new REST({ version: '10' }).setToken(token);
         await rest.put(Routes.applicationCommands(client.user.id), { body: commands });
-        console.log(`[!] ${db.config.nome} Online com Sucesso.`);
     });
 
     client.on('interactionCreate', async (i) => {
-        // --- PAINEL DE VENDAS ---
-        if (i.isChatInputCommand() && i.commandName === 'vendas') {
+        // --- PAINEL DE VENDAS (EXATAMENTE COMO A PRINT) ---
+        if (i.commandName === 'vendas') {
             const embed = new EmbedBuilder()
-                .setTitle(`Combo Contas Baratas - ${db.config.nome}`)
+                .setTitle(`Combo Contas Baratas`)
                 .setImage(db.config.banner)
                 .setColor("#2b2d31")
-                .setDescription(`📌 **Nesta seção, você encontrará apenas contas baratas com itens bons.**\n🎮 Contas com diversas variedades de itens e frutas.\n\n**Siglas:**\nGOD: 🔱 | CDK: ⚔️ | SG: 🎸 | SA: ⚓\n\n🖱️ Clique no botão abaixo para ver as opções!`);
+                .setDescription(`📌 Nesta seção, você encontrará apenas contas baratas com itens bons.\n🎮 Contas com diversas variedades de itens e frutas no Blox Fruits.\n\n**Siglas:**\nGOD: 🔱 | CDK: ⚔️ | SG: 🎸 | SA: ⚓\n\n🖱️ Clique no botão abaixo e escolha sua conta!`)
+                .setFields({ name: 'A partir de R$ 4,99', value: 'Clique no botão "Ver Opções"' });
 
             const row = new ActionRowBuilder().addComponents(
                 new ButtonBuilder().setCustomId('ver_opcoes').setLabel('Ver Opções').setStyle(ButtonStyle.Success)
             );
-            await i.reply({ embeds: [embed], components: [row] });
-        }
-
-        // --- PAINEL GERENCIAR (ADMIN) ---
-        if (i.isChatInputCommand() && i.commandName === 'gerenciar') {
-            const embed = new EmbedBuilder()
-                .setTitle("⚙️ Gestão de Loja - Sirius")
-                .setColor("Orange")
-                .setDescription("Adicione produtos ou altere as configurações da loja.");
-
-            const row = new ActionRowBuilder().addComponents(
-                new ButtonBuilder().setCustomId('edit_store').setLabel('Configurar Loja').setStyle(ButtonStyle.Primary),
-                new ButtonBuilder().setCustomId('add_item').setLabel('Adicionar Produto').setStyle(ButtonStyle.Success),
-                new ButtonBuilder().setCustomId('clear_stock').setLabel('Limpar Estoque').setStyle(ButtonStyle.Danger)
-            );
-            await i.reply({ embeds: [embed], components: [row], ephemeral: true });
+            return i.reply({ embeds: [embed], components: [row] });
         }
 
         // --- BOTÃO VER OPÇÕES ---
         if (i.isButton() && i.customId === 'ver_opcoes') {
-            if (db.estoque.length === 0) return i.reply({ content: "❌ O estoque está vazio no momento.", ephemeral: true });
+            if (db.estoque.length === 0) return i.reply({ content: "❌ Estoque vazio!", ephemeral: true });
             const menu = new ActionRowBuilder().addComponents(
                 new StringSelectMenuBuilder()
-                    .setCustomId('select_compra')
-                    .setPlaceholder('🛒 Escolha sua conta aqui...')
+                    .setCustomId('comprar')
+                    .setPlaceholder('🛒 Selecione o seu produto...')
                     .addOptions(db.estoque.map((e, idx) => ({
                         label: e.nome,
-                        description: `R$ ${e.preco} | Clique para abrir ticket`,
+                        description: `R$ ${e.preco}`,
                         value: `prod_${idx}`,
-                        emoji: e.emoji || "🎮"
+                        emoji: e.emoji
                     })))
             );
-            await i.reply({ content: "Escolha uma opção:", components: [menu], ephemeral: true });
+            return i.reply({ content: "Selecione uma conta:", components: [menu], ephemeral: true });
         }
 
-        // --- MODAIS DE GESTÃO ---
-        if (i.isButton()) {
-            if (i.customId === 'edit_store') {
-                const modal = new ModalBuilder().setCustomId('modal_store').setTitle('Configurar Loja');
-                modal.addComponents(
-                    new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('m_nome').setLabel("Nome").setStyle(TextInputStyle.Short).setValue(db.config.nome)),
-                    new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('m_pix').setLabel("Chave PIX").setStyle(TextInputStyle.Short).setValue(db.config.pix)),
-                    new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('m_banner').setLabel("URL do Banner").setStyle(TextInputStyle.Short).setValue(db.config.banner))
-                );
-                await i.showModal(modal);
-            }
-            if (i.customId === 'add_item') {
-                const modal = new ModalBuilder().setCustomId('modal_add').setTitle('Novo Produto');
-                modal.addComponents(
-                    new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('m_inome').setLabel("Nome").setStyle(TextInputStyle.Short).setPlaceholder("Ex: God + CDK")),
-                    new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('m_ipreco').setLabel("Preço").setStyle(TextInputStyle.Short).setPlaceholder("Ex: 9.99")),
-                    new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('m_iemoji').setLabel("Emoji").setStyle(TextInputStyle.Short).setPlaceholder("Ex: 🔱"))
-                );
-                await i.showModal(modal);
-            }
-            if (i.customId === 'close_ticket') await i.channel.delete();
-            if (i.customId === 'clear_stock') { db.estoque = []; await i.reply({ content: "🗑️ Estoque limpo!", ephemeral: true }); }
-        }
-
-        // --- SUBMIT MODAL ---
-        if (i.isModalSubmit()) {
-            if (i.customId === 'modal_store') {
-                db.config = { nome: i.fields.getTextInputValue('m_nome'), pix: i.fields.getTextInputValue('m_pix'), banner: i.fields.getTextInputValue('m_banner') };
-                await i.reply({ content: "✅ Configurações salvas!", ephemeral: true });
-            }
-            if (i.customId === 'modal_add') {
-                db.estoque.push({ nome: i.fields.getTextInputValue('m_inome'), preco: i.fields.getTextInputValue('m_ipreco'), emoji: i.fields.getTextInputValue('m_iemoji') });
-                await i.reply({ content: "✅ Item adicionado!", ephemeral: true });
-            }
-        }
-
-        // --- TICKET DE CHECKOUT ---
-        if (i.isStringSelectMenu() && i.customId === 'select_compra') {
+        // --- CHECKOUT E TICKET ---
+        if (i.isStringSelectMenu() && i.customId === 'comprar') {
+            await i.deferUpdate(); // Evita o erro de "não respondeu"
             const item = db.estoque[i.values[0].split('_')[1]];
             const canal = await i.guild.channels.create({
                 name: `🛒-${i.user.username}`,
@@ -128,17 +78,60 @@ app.post('/ligar-bot', async (req, res) => {
             const embedPay = new EmbedBuilder()
                 .setTitle(`💳 Pagamento - ${item.nome}`)
                 .setColor("#2ecc71")
-                .setDescription(`Olá ${i.user}!\n\n💵 **Valor:** R$ ${item.preco}\n🔑 **PIX:** \`${db.config.pix}\`\n\nEnvie o comprovante abaixo para receber seu produto.`);
+                .setDescription(`Olá ${i.user}!\n\n💵 **Valor:** R$ ${item.preco}\n🔑 **PIX:** \`${db.config.pix}\`\n\nEnvie o comprovante para um moderador entregar sua conta!`);
 
-            const btnClose = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('close_ticket').setLabel('Fechar Ticket').setStyle(ButtonStyle.Danger));
-            await canal.send({ content: `${i.user}`, embeds: [embedPay], components: [btnClose] });
+            const row = new ActionRowBuilder().addComponents(
+                new ButtonBuilder().setCustomId('fechar').setLabel('Fechar Ticket').setStyle(ButtonStyle.Danger)
+            );
 
-            const btnIr = new ActionRowBuilder().addComponents(new ButtonBuilder().setLabel('Ir para o Ticket').setStyle(ButtonStyle.Link).setURL(`https://discord.com/channels/${i.guild.id}/${canal.id}`));
-            await i.update({ content: `✅ Ticket criado: ${canal}`, components: [btnIr], ephemeral: true });
+            await canal.send({ content: `${i.user}`, embeds: [embedPay], components: [row] });
+            return i.followUp({ content: `✅ Ticket aberto: ${canal}`, ephemeral: true });
         }
+
+        // --- COMANDO GERENCIAR ---
+        if (i.commandName === 'gerenciar') {
+            const row = new ActionRowBuilder().addComponents(
+                new ButtonBuilder().setCustomId('conf_loja').setLabel('Configurar Loja').setStyle(ButtonStyle.Primary),
+                new ButtonBuilder().setCustomId('add_item').setLabel('Adicionar Item').setStyle(ButtonStyle.Success)
+            );
+            return i.reply({ content: "⚙️ Painel de Controle", components: [row], ephemeral: true });
+        }
+
+        // --- MODAIS (EDIÇÃO TOTAL) ---
+        if (i.isButton() && i.customId === 'conf_loja') {
+            const modal = new ModalBuilder().setCustomId('m_loja').setTitle('Configurar Loja');
+            modal.addComponents(
+                new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('n').setLabel("Nome").setStyle(TextInputStyle.Short).setValue(db.config.nome)),
+                new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('p').setLabel("PIX").setStyle(TextInputStyle.Short).setValue(db.config.pix)),
+                new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('b').setLabel("Banner URL").setStyle(TextInputStyle.Short).setValue(db.config.banner))
+            );
+            return i.showModal(modal);
+        }
+
+        if (i.isButton() && i.customId === 'add_item') {
+            const modal = new ModalBuilder().setCustomId('m_item').setTitle('Adicionar ao Estoque');
+            modal.addComponents(
+                new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('n').setLabel("Nome do Item").setStyle(TextInputStyle.Short)),
+                new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('p').setLabel("Preço").setStyle(TextInputStyle.Short)),
+                new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('e').setLabel("Emoji").setStyle(TextInputStyle.Short))
+            );
+            return i.showModal(modal);
+        }
+
+        if (i.isModalSubmit()) {
+            if (i.customId === 'm_loja') {
+                db.config = { nome: i.fields.getTextInputValue('n'), pix: i.fields.getTextInputValue('p'), banner: i.fields.getTextInputValue('b') };
+                return i.reply({ content: "✅ Atualizado!", ephemeral: true });
+            }
+            if (i.customId === 'm_item') {
+                db.estoque.push({ nome: i.fields.getTextInputValue('n'), preco: i.fields.getTextInputValue('p'), emoji: i.fields.getTextInputValue('e') });
+                return i.reply({ content: "✅ Produto Adicionado!", ephemeral: true });
+            }
+        }
+        if (i.isButton() && i.customId === 'fechar') return i.channel.delete();
     });
 
     await client.login(token);
-    res.send({ msg: "Sistema Iniciado!" });
+    res.send({ msg: "Bot Online!" });
 });
 app.listen(process.env.PORT || 3000);
