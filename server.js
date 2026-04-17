@@ -1,108 +1,124 @@
 const express = require('express');
 const { 
-    Client, GatewayIntentBits, ActionRowBuilder, EmbedBuilder, 
-    StringSelectMenuBuilder, SlashCommandBuilder, REST, Routes, 
-    PermissionFlagsBits, ChannelType, ButtonBuilder, ButtonStyle 
+    Client, GatewayIntentBits, ActionRowBuilder, EmbedBuilder, StringSelectMenuBuilder, 
+    SlashCommandBuilder, REST, Routes, PermissionFlagsBits, ChannelType, ButtonBuilder, ButtonStyle 
 } = require('discord.js');
 const app = express();
 const path = require('path');
 
 app.use(express.json());
 
-// CONFIGURAÇÃO GLOBAL QUE VEM DO SITE
-let botConfig = {};
+// BANCO DE DADOS EM MEMÓRIA
+let db = {
+    config: {
+        nome: "Loja Sirius",
+        pix: "Defina sua chave",
+        banner: "https://i.imgur.com/vWb6XyS.png",
+        cor: "#2b2d31",
+        canalLogs: null
+    },
+    estoque: [
+        { label: "LV 2800: God + Cdk + SG + Frutas", value: "p1", preco: "9.99", emoji: "⚔️", desc: "Conta level max com itens raros." },
+        { label: "LV 2800: God + Shark Anchor + Frutas", value: "p2", preco: "11.99", emoji: "⚓", desc: "Focada em Shark Anchor." }
+    ]
+};
 
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
 app.post('/ligar-bot', async (req, res) => {
     const { token, nomeLoja, pix, banner } = req.body;
-    
-    // Salva as configs enviadas pelo site
-    botConfig = {
-        nome: nomeLoja || "Minha Loja",
-        pix: pix || "Não configurado",
-        banner: banner || "https://i.imgur.com/vWb6XyS.png",
-        estoque: [
-            { id: "c1", nome: "LV 2800: God + Cdk + SG + Frutas", preco: "9.99", emoji: "⚔️" },
-            { id: "c2", nome: "LV 2800: God + Shark Anchor + Frutas", preco: "11.99", emoji: "⚓" },
-            { id: "c3", nome: "LV 2800: God + Cdk + MF + VH", preco: "13.99", emoji: "🥛" },
-            { id: "c4", nome: "LV 2800: God Human + Frutas", preco: "4.99", emoji: "🔱" }
-        ]
-    };
+    db.config.nome = nomeLoja || db.config.nome;
+    db.config.pix = pix || db.config.pix;
+    db.config.banner = banner || db.config.banner;
 
-    const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+    const client = new Client({ intents: [3276799] });
 
     client.on('ready', async () => {
         const commands = [
-            new SlashCommandBuilder().setName('vendas').setDescription('Envia o painel de vendas profissional'),
-        ].map(cmd => cmd.toJSON());
+            new SlashCommandBuilder().setName('vendas').setDescription('Envia o painel de vendas'),
+            new SlashCommandBuilder().setName('configurar').setDescription('Configura o bot (Admin)').setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+        ].map(c => c.toJSON());
 
         const rest = new REST({ version: '10' }).setToken(token);
-        try { await rest.put(Routes.applicationCommands(client.user.id), { body: commands }); } catch (e) {}
+        await rest.put(Routes.applicationCommands(client.user.id), { body: commands });
+        console.log("Bot de Vendas Online!");
     });
 
     client.on('interactionCreate', async (i) => {
-        // COMANDO /VENDAS
-        if (i.isChatInputCommand() && i.commandName === 'vendas') {
+        // --- COMANDO /VENDAS ---
+        if (i.commandName === 'vendas') {
             const embed = new EmbedBuilder()
-                .setTitle(`Combo Contas Baratas - ${botConfig.nome}`)
-                .setImage(botConfig.banner)
-                .setColor("#2b2d31")
-                .setDescription(`📌 Nesta seção, você encontrará apenas contas baratas com itens bons.\n🎮 Contas com diversas variedades de itens e frutas.\n\n**Siglas:**\nGOD: 🔱 God Human | CDK: ⚔️ Cursed Dual Katana\n\n🖱️ Clique no menu abaixo e escolha sua conta!`);
+                .setTitle(`Combo Contas Baratas - ${db.config.nome}`)
+                .setImage(db.config.banner)
+                .setColor(db.config.cor)
+                .setDescription(`📌 Nesta seção, você encontrará apenas contas baratas com itens bons.\n🎮 Contas com diversas variedades de itens e frutas.\n\n**Siglas:**\nGOD: 🔱 God Human | CDK: ⚔️ Cursed Dual Katana\nSG: 🎸 Soul Guitar | SA: ⚓ Shark Anchor\n\n🖱️ Clique no menu abaixo e escolha sua conta!`);
 
-            const menu = new ActionRowBuilder().addComponents(
+            const row = new ActionRowBuilder().addComponents(
                 new StringSelectMenuBuilder()
-                    .setCustomId('selecionar_produto')
-                    .setPlaceholder('🛒 Clique aqui para ver as opções')
-                    .addOptions(botConfig.estoque.map(p => ({
-                        label: p.nome,
-                        description: `Valor: R$ ${p.preco}`,
-                        value: p.id,
-                        emoji: p.emoji
-                    })))
+                    .setCustomId('menu_vendas')
+                    .setPlaceholder('🛒 Clique aqui para selecionar seu produto')
+                    .addOptions(db.estoque.map(e => ({ label: e.label, description: `R$ ${e.preco}`, value: e.value, emoji: e.emoji })))
             );
-            await i.reply({ embeds: [embed], components: [menu] });
+            await i.reply({ embeds: [embed], components: [row] });
         }
 
-        // MENU SELEÇÃO -> CRIA TICKET
-        if (i.isStringSelectMenu() && i.customId === 'selecionar_produto') {
-            const produto = botConfig.estoque.find(p => p.id === i.values[0]);
-            const idPedido = Math.floor(1000 + Math.random() * 9000);
-
+        // --- SELEÇÃO DE PRODUTO -> CRIAÇÃO DE TICKET ---
+        if (i.isStringSelectMenu() && i.customId === 'menu_vendas') {
+            const produto = db.estoque.find(p => p.value === i.values[0]);
+            
             const canal = await i.guild.channels.create({
                 name: `🛒-${i.user.username}`,
                 type: ChannelType.GuildText,
                 permissionOverwrites: [
                     { id: i.guild.id, deny: [PermissionFlagsBits.ViewChannel] },
-                    { id: i.user.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] },
-                ],
+                    { id: i.user.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.AttachFiles] }
+                ]
             });
 
-            const embedPagamento = new EmbedBuilder()
-                .setTitle(`💳 Pagamento - Pedido #${idPedido}`)
-                .setColor("#2ecc71")
-                .setDescription(`Olá! Você selecionou: **${produto.nome}**\n\n💵 **VALOR:** R$ ${produto.preco}\n🔑 **PIX:** \`${botConfig.pix}\`\n\n**Instruções:**\n1️⃣ Copie a chave acima.\n2️⃣ Faça o pagamento.\n3️⃣ Envie o comprovante aqui no chat!`)
-                .setFooter({ text: `Loja: ${botConfig.nome}` });
+            const embedTicket = new EmbedBuilder()
+                .setTitle(`💳 Pagamento - ${produto.label}`)
+                .setColor("#00ff00")
+                .setDescription(`Olá ${i.user}, você iniciou o processo de compra.\n\n💵 **Valor:** \`R$ ${produto.preco}\`\n🔑 **PIX:** \`${db.config.pix}\`\n\n**Instruções:**\n1️⃣ Copie a chave acima.\n2️⃣ Pague no seu banco.\n3️⃣ Envie o comprovante aqui para entrega.\n\n*Sistema Automático ${db.config.nome}*`);
 
-            const botaoFechar = new ActionRowBuilder().addComponents(
+            const btnFechar = new ActionRowBuilder().addComponents(
                 new ButtonBuilder().setCustomId('fechar_ticket').setLabel('Fechar Ticket').setStyle(ButtonStyle.Danger)
             );
 
-            await canal.send({ content: `${i.user}`, embeds: [embedPagamento], components: [botaoFechar] });
-            await i.reply({ content: `✅ Ticket criado em ${canal}!`, ephemeral: true });
+            await canal.send({ content: `${i.user}`, embeds: [embedTicket], components: [btnFechar] });
+
+            const btnIrTicket = new ActionRowBuilder().addComponents(
+                new ButtonBuilder().setLabel('Ir para o Ticket').setStyle(ButtonStyle.Link).setURL(`https://discord.com/channels/${i.guild.id}/${canal.id}`)
+            );
+
+            await i.reply({ content: `✅ Ticket criado com sucesso em ${canal}!`, components: [btnIrTicket], ephemeral: true });
+        }
+
+        // --- COMANDO /CONFIGURAR ---
+        if (i.commandName === 'configurar') {
+            const embedConfig = new EmbedBuilder()
+                .setTitle("⚙️ Painel de Configuração")
+                .setDescription("O que você deseja alterar no bot?")
+                .addFields(
+                    { name: "PIX Atual", value: `\`${db.config.pix}\``, inline: true },
+                    { name: "Nome da Loja", value: `\`${db.config.nome}\``, inline: true }
+                );
+
+            const row = new ActionRowBuilder().addComponents(
+                new ButtonBuilder().setCustomId('set_pix').setLabel('Mudar PIX').setStyle(ButtonStyle.Primary),
+                new ButtonBuilder().setCustomId('set_banner').setLabel('Mudar Banner').setStyle(ButtonStyle.Primary)
+            );
+
+            await i.reply({ embeds: [embedConfig], components: [row], ephemeral: true });
         }
 
         if (i.isButton() && i.customId === 'fechar_ticket') {
-            await i.channel.delete();
+            await i.reply("O ticket será excluído em 5 segundos...");
+            setTimeout(() => i.channel.delete(), 5000);
         }
     });
 
-    try {
-        await client.login(token);
-        res.send({ msg: "✅ Bot Configurado e Online!" });
-    } catch (e) {
-        res.status(500).send({ erro: "Token Inválido!" });
-    }
+    await client.login(token);
+    res.send({ msg: "Bot Online!" });
 });
 
 app.listen(process.env.PORT || 3000);
