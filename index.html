@@ -1,30 +1,30 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Dashboard Sirius Maker</title>
+    <title>Dashboard Sirius Pro</title>
     <style>
-        body { background: #0b0b0c; color: #fff; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .card { background: #151517; padding: 40px; border-radius: 20px; width: 380px; border: 1px solid #222; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        h1 { text-align: center; color: #00ff6a; margin-bottom: 25px; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #333; background: #000; color: #fff; box-sizing: border-box; }
-        button { width: 100%; padding: 15px; background: #00ff6a; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 10px; }
-        #s { text-align: center; margin-top: 15px; font-size: 14px; color: #00ff6a; }
+        body { background: #080809; color: #fff; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: #111113; padding: 40px; border-radius: 20px; width: 380px; border: 1px solid #1f1f22; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
+        h1 { text-align: center; color: #00ff6a; font-weight: 900; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #222; background: #000; color: #fff; box-sizing: border-box; outline: none; }
+        button { width: 100%; padding: 16px; background: #00ff6a; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 10px; }
+        #s { text-align: center; margin-top: 15px; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="card">
-        <h1>SIRIUS MAKER</h1>
+        <h1>SIRIUS PRO</h1>
         <input type="text" id="t" placeholder="Token do Bot">
         <input type="text" id="n" placeholder="Nome da Loja">
         <input type="text" id="p" placeholder="Chave PIX">
-        <input type="text" id="b" placeholder="URL do Banner">
-        <button onclick="ligar()">LIGAR BOT AGORA</button>
+        <input type="text" id="b" placeholder="Link do Banner">
+        <button onclick="ligar()">ATIVAR SISTEMA</button>
         <div id="s"></div>
     </div>
     <script>
         async function ligar() {
             const s = document.getElementById('s');
-            s.innerText = "⏳ Iniciando...";
+            s.innerText = "⏳ Ativando...";
             const res = await fetch('/ligar-bot', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -36,7 +36,8 @@
                 })
             });
             const data = await res.json();
-            s.innerText = data.msg || "Erro!";
+            s.innerText = data.msg ? "✅ ONLINE" : "❌ ERRO";
+            s.style.color = data.msg ? "#00ff6a" : "#ff4444";
         }
     </script>
 </body>
