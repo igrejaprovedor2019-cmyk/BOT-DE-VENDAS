@@ -1,27 +1,36 @@
 const express = require('express');
-const { Client, GatewayIntentBits, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, StringSelectMenuBuilder } = require('discord.js');
+const { Client, GatewayIntentBits, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('discord.js');
 const app = express();
+const path = require('path');
 
 app.use(express.json());
 
-// CONFIGURAÇÕES INICIAIS (O usuário pode mudar via !configurar depois)
+// CONFIGURAÇÕES PADRÃO (Você pode editar aqui direto)
 let configBot = {
-    pix: "SUA_CHAVE_AQUI",
-    imagemBanner: "https://i.imgur.com/vWb6XyS.png", // Link da imagem do topo
+    pix: "SUA_CHAVE_PIX_AQUI",
+    imagemBanner: "https://i.imgur.com/vWb6XyS.png", // Imagem do topo igual ao print
     cor: "#2b2d31"
 };
 
-app.get('/', (req, res) => res.send("O Bot de Vendas está ONLINE no Render!"));
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
 app.post('/ligar-bot', async (req, res) => {
     const { token, nomeLoja } = req.body;
     try {
-        const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+        const client = new Client({ 
+            intents: [
+                GatewayIntentBits.Guilds, 
+                GatewayIntentBits.GuildMessages, 
+                GatewayIntentBits.MessageContent
+            ] 
+        });
+
+        client.on('ready', () => console.log(`Bot ${client.user.tag} Online!`));
 
         client.on('messageCreate', async (msg) => {
             if (msg.author.bot) return;
 
-            // COMANDO !VENDAS (O PAINEL DA FOTO)
+            // COMANDO !VENDAS (O PAINEL DO PRINT)
             if (msg.content === '!vendas') {
                 const embedVendas = new EmbedBuilder()
                     .setTitle(`Combo Contas Baratas - ${nomeLoja}`)
@@ -30,35 +39,47 @@ app.post('/ligar-bot', async (req, res) => {
                     .setFooter({ text: 'A partir de R$ 4,99 | Clique no botão "Ver Opções"' })
                     .setColor(configBot.cor);
 
-                const botao = new ActionRowBuilder().addComponents(
-                    new ButtonBuilder().setCustomId('ver_opcoes').setLabel('Ver Opções').setStyle(ButtonStyle.Success)
+                const row = new ActionRowBuilder().addComponents(
+                    new ButtonBuilder()
+                        .setCustomId('ver_opcoes')
+                        .setLabel('Ver Opções')
+                        .setStyle(ButtonStyle.Success)
                 );
 
-                await msg.channel.send({ embeds: [embedVendas], components: [botao] });
+                await msg.channel.send({ embeds: [embedVendas], components: [row] });
             }
 
             // COMANDO !CHAVE
             if (msg.content === '!chave') {
-                msg.reply(`💰 Minha chave PIX é: \`${configBot.pix}\`\nApós pagar, envie o comprovante!`);
+                await msg.reply(`💰 **CHAVE PIX PARA PAGAMENTO:**\n\`${configBot.pix}\`\n\nApós realizar o pagamento, envie o comprovante para o dono da loja!`);
             }
 
             // COMANDO !CONFIGURAR
-            if (msg.content === '!configurar') {
-                msg.reply({ content: "⚙️ **Painel de Configuração Privado**\nUse `!setpix CHAVE` para mudar o pix ou `!setbanner LINK` para a imagem.", ephemeral: true });
+            if (msg.content.startsWith('!setpix')) {
+                const novaChave = msg.content.split(' ')[1];
+                if(!novaChave) return msg.reply("Use: !setpix CHAVE_AQUI");
+                configBot.pix = novaChave;
+                msg.reply("✅ Chave PIX atualizada!");
             }
         });
 
-        // LÓGICA DO BOTÃO "VER OPÇÕES"
-        client.on('interactionCreate', async (i) => {
-            if (!i.isButton()) return;
-            if (i.customId === 'ver_opcoes') {
-                await i.reply({ content: "🛒 **PRODUTOS:**\n1️⃣ Conta Level Max + CDK: R$ 10,00\n2️⃣ Conta GodHuman + Soul Guitar: R$ 15,00\n\nPara comprar, use `!chave`", ephemeral: true });
+        // RESPOSTA AO CLICAR NO BOTÃO
+        client.on('interactionCreate', async (interaction) => {
+            if (!interaction.isButton()) return;
+            if (interaction.customId === 'ver_opcoes') {
+                await interaction.reply({ 
+                    content: "🛒 **NOSSOS PRODUTOS DISPONÍVEIS:**\n\n1️⃣ **CONTA LEVEL MAX + CDK + GODHUMAN** - R$ 14,90\n2️⃣ **CONTA COM FRUTA LEOPARD NO INV** - R$ 25,00\n\nPara comprar, use o comando `!chave` e envie o comprovante!", 
+                    ephemeral: true 
+                });
             }
         });
 
         await client.login(token);
-        res.send({ status: "Sucesso" });
-    } catch (e) { res.status(500).send({ erro: e.message }); }
+        res.send({ msg: "Bot Ligado com Sucesso!" });
+    } catch (e) {
+        res.status(500).send({ erro: "Erro: Token inválido ou Intents desligadas." });
+    }
 });
 
-app.listen(process.env.PORT || 3000);
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Servidor na porta ${PORT}`));
