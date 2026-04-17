@@ -2,62 +2,42 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Sirius Maker | Dashboard</title>
+    <title>Dashboard GBZ</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { background: #080809; color: #fff; font-family: 'Inter', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .container { background: #111113; padding: 40px; border-radius: 24px; width: 400px; border: 1px solid #1f1f22; box-shadow: 0 20px 40px rgba(0,0,0,0.8); }
-        h1 { text-align: center; color: #00ff6a; font-weight: 900; letter-spacing: -1px; margin-bottom: 5px; }
-        p { text-align: center; color: #555; font-size: 14px; margin-bottom: 30px; }
-        .input-group { margin-bottom: 18px; }
-        label { display: block; color: #aaa; font-size: 11px; text-transform: uppercase; margin-bottom: 6px; font-weight: 700; }
-        input { width: 100%; padding: 14px; background: #080809; border: 1px solid #222; border-radius: 12px; color: #fff; box-sizing: border-box; transition: 0.3s; }
-        input:focus { border-color: #00ff6a; outline: none; box-shadow: 0 0 15px rgba(0,255,106,0.15); }
-        button { width: 100%; padding: 16px; background: #00ff6a; color: #000; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; transition: 0.3s; margin-top: 10px; }
-        button:hover { background: #00cc55; transform: scale(1.02); }
-        #status { text-align: center; margin-top: 20px; font-weight: 700; font-size: 14px; }
+        body { background: #0a0a0b; color: #fff; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .box { background: #151517; padding: 30px; border-radius: 15px; width: 350px; border: 1px solid #222; }
+        input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #333; background: #000; color: #fff; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; background: #00ff6a; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:hover { background: #00d659; transform: scale(1.02); }
+        h2 { text-align: center; color: #00ff6a; margin-top: 0; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>SIRIUS MAKER</h1>
-        <p>Ativação de Sistema de Vendas Pro</p>
-        <div class="input-group">
-            <label>Bot Token</label>
-            <input type="text" id="token" placeholder="Token do Developer Portal">
-        </div>
-        <div class="input-group">
-            <label>Nome da Loja</label>
-            <input type="text" id="nome" placeholder="Ex: GBZ Store">
-        </div>
-        <div class="input-group">
-            <label>Chave PIX</label>
-            <input type="text" id="pix" placeholder="E-mail ou CPF">
-        </div>
-        <div class="input-group">
-            <label>URL do Banner</label>
-            <input type="text" id="banner" placeholder="Link .png ou .jpg">
-        </div>
-        <button onclick="ligar()">LIGAR SISTEMA AGORA</button>
-        <div id="status"></div>
+    <div class="box">
+        <h2>SIRIUS CONFIG</h2>
+        <input type="text" id="t" placeholder="Token do Bot">
+        <input type="text" id="n" placeholder="Nome da Loja">
+        <input type="text" id="p" placeholder="Chave PIX">
+        <input type="text" id="b" placeholder="URL do Banner (Fim .png ou .jpg)">
+        <button onclick="ligar()">ATIVAR BOT AGORA</button>
+        <p id="s" style="text-align:center; font-size:12px; margin-top:10px;"></p>
     </div>
     <script>
         async function ligar() {
-            const status = document.getElementById('status');
-            status.innerText = "⏳ Conectando...";
+            const s = document.getElementById('s');
+            s.innerText = "⏳ Iniciando...";
             const res = await fetch('/ligar-bot', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
-                    token: document.getElementById('token').value,
-                    nomeLoja: document.getElementById('nome').value,
-                    pix: document.getElementById('pix').value,
-                    banner: document.getElementById('banner').value
+                    token: document.getElementById('t').value,
+                    nomeLoja: document.getElementById('n').value,
+                    pix: document.getElementById('p').value,
+                    banner: document.getElementById('b').value
                 })
             });
             const data = await res.json();
-            status.innerText = data.msg ? "✅ " + data.msg : "❌ Erro ao ligar";
-            status.style.color = data.msg ? "#00ff6a" : "#ff4444";
+            s.innerText = data.msg ? "✅ " + data.msg : "❌ Erro";
         }
     </script>
 </body>
