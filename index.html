@@ -1,43 +1,202 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
-    <title>Dashboard Sirius Pro</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sirius Maker - Dashboard Elite</title>
     <style>
-        body { background: #080809; color: #fff; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .card { background: #111113; padding: 40px; border-radius: 20px; width: 380px; border: 1px solid #1f1f22; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
-        h1 { text-align: center; color: #00ff6a; font-weight: 900; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #222; background: #000; color: #fff; box-sizing: border-box; outline: none; }
-        button { width: 100%; padding: 16px; background: #00ff6a; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 10px; }
-        #s { text-align: center; margin-top: 15px; font-weight: bold; }
+        :root {
+            --primary: #00ff6a;
+            --bg: #080809;
+            --card: #111113;
+            --border: #1f1f22;
+            --input: #000000;
+            --text: #ffffff;
+            --text-dim: #555555;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .container {
+            background: var(--card);
+            padding: 40px;
+            border-radius: 24px;
+            width: 100%;
+            max-width: 400px;
+            border: 1px solid var(--border);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 900;
+            color: var(--primary);
+            margin: 0 0 10px 0;
+            letter-spacing: -1px;
+            text-transform: uppercase;
+        }
+
+        p {
+            color: var(--text-dim);
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            text-align: left;
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            color: var(--primary);
+            margin-bottom: 5px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--input);
+            color: var(--text);
+            box-sizing: border-box;
+            outline: none;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(0, 255, 106, 0.1);
+        }
+
+        button {
+            width: 100%;
+            padding: 16px;
+            background: var(--primary);
+            color: #000;
+            border: none;
+            border-radius: 14px;
+            font-weight: 800;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+            text-transform: uppercase;
+        }
+
+        button:hover {
+            background: #00d659;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 255, 106, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        #status {
+            margin-top: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            min-height: 20px;
+        }
+
+        .footer-note {
+            margin-top: 25px;
+            font-size: 11px;
+            color: #333;
+        }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>SIRIUS PRO</h1>
-        <input type="text" id="t" placeholder="Token do Bot">
-        <input type="text" id="n" placeholder="Nome da Loja">
-        <input type="text" id="p" placeholder="Chave PIX">
-        <input type="text" id="b" placeholder="Link do Banner">
-        <button onclick="ligar()">ATIVAR SISTEMA</button>
-        <div id="s"></div>
+
+    <div class="container">
+        <h1>SIRIUS MAKER</h1>
+        <p>Dashboard de Ativação - Vendas & Estoque</p>
+
+        <div class="input-group">
+            <label>Token do Bot</label>
+            <input type="password" id="t" placeholder="Insira o token do Discord Developer">
+        </div>
+
+        <div class="input-group">
+            <label>Nome da Loja</label>
+            <input type="text" id="n" placeholder="Ex: GBZ Store">
+        </div>
+
+        <div class="input-group">
+            <label>Chave PIX</label>
+            <input type="text" id="p" placeholder="Chave para receber pagamentos">
+        </div>
+
+        <div class="input-group">
+            <label>URL do Banner</label>
+            <input type="text" id="b" placeholder="Link da imagem (Imgur)">
+        </div>
+
+        <button onclick="ligar()">Ligar Sistema Elite</button>
+
+        <div id="status"></div>
+
+        <div class="footer-note">
+            SIRIUS MAKER © 2024 - Sistema de Vendas Automático
+        </div>
     </div>
+
     <script>
         async function ligar() {
-            const s = document.getElementById('s');
-            s.innerText = "⏳ Ativando...";
-            const res = await fetch('/ligar-bot', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    token: document.getElementById('t').value,
-                    nomeLoja: document.getElementById('n').value,
-                    pix: document.getElementById('p').value,
-                    banner: document.getElementById('b').value
-                })
-            });
-            const data = await res.json();
-            s.innerText = data.msg ? "✅ ONLINE" : "❌ ERRO";
-            s.style.color = data.msg ? "#00ff6a" : "#ff4444";
+            const status = document.getElementById('status');
+            const btn = document.querySelector('button');
+            
+            status.innerText = "⏳ Conectando à API do Discord...";
+            status.style.color = "#888";
+            btn.disabled = true;
+            btn.style.opacity = "0.5";
+
+            try {
+                const res = await fetch('/ligar-bot', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        token: document.getElementById('t').value,
+                        nomeLoja: document.getElementById('n').value,
+                        pix: document.getElementById('p').value,
+                        banner: document.getElementById('b').value
+                    })
+                });
+
+                const data = await res.json();
+
+                if (data.msg) {
+                    status.innerText = "✅ BOT ONLINE E PRONTO!";
+                    status.style.color = "#00ff6a";
+                } else {
+                    status.innerText = "❌ ERRO AO LIGAR";
+                    status.style.color = "#ff4444";
+                }
+            } catch (err) {
+                status.innerText = "❌ ERRO DE CONEXÃO";
+                status.style.color = "#ff4444";
+            } finally {
+                btn.disabled = false;
+                btn.style.opacity = "1";
+            }
         }
     </script>
 </body>
