@@ -2,49 +2,40 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Criador de Bot de Vendas</title>
+    <title>Painel Controle Bot</title>
     <style>
-        body { font-family: sans-serif; background: #2c2f33; color: white; display: flex; justify-content: center; padding: 50px; }
-        .card { background: #23272a; padding: 20px; border-radius: 8px; width: 350px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        input { width: 100%; padding: 10px; margin: 10px 0; border-radius: 4px; border: none; box-sizing: border-box; }
-        button { width: 100%; padding: 10px; background: #7289da; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        button:hover { background: #5b70be; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0f0f10; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .box { background: #1a1a1c; padding: 30px; border-radius: 12px; width: 350px; border: 1px solid #333; text-align: center; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 6px; border: 1px solid #444; background: #000; color: white; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #00c853; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; }
+        button:hover { background: #00a944; transform: scale(1.02); }
+        h2 { margin-bottom: 20px; color: #00c853; }
+        #status { margin-top: 15px; font-size: 14px; }
     </style>
 </head>
 <body>
-
-<div class="card">
-    <h2>Configurar meu Bot</h2>
-    <input type="text" id="token" placeholder="Insira o Token do Bot">
-    <input type="text" id="nomeLoja" placeholder="Nome da sua Loja">
-    <button onclick="ligarBot()">ATIVAR MEU BOT</button>
-    <p id="status"></p>
-</div>
-
-<script>
-    async function ligarBot() {
-        const token = document.getElementById('token').value;
-        const nomeLoja = document.getElementById('nomeLoja').value;
-        const status = document.getElementById('status');
-
-        status.innerText = "Conectando...";
-
-        const response = await fetch('/ligar-bot', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token, nomeLoja })
-        });
-
-        const data = await response.json();
-        if(data.erro) {
-            status.style.color = "red";
-            status.innerText = data.erro;
-        } else {
-            status.style.color = "green";
-            status.innerText = data.msg;
+    <div class="box">
+        <h2>Sirius Bot Maker</h2>
+        <input type="text" id="token" placeholder="Cole o Token do Bot">
+        <input type="text" id="nomeLoja" placeholder="Nome da Loja (Ex: Clube Sirius)">
+        <button onclick="ligar()">LIGAR BOT AGORA</button>
+        <div id="status"></div>
+    </div>
+    <script>
+        async function ligar() {
+            const token = document.getElementById('token').value;
+            const nomeLoja = document.getElementById('nomeLoja').value;
+            const st = document.getElementById('status');
+            st.innerText = "Iniciando...";
+            const res = await fetch('/ligar-bot', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token, nomeLoja })
+            });
+            const data = await res.json();
+            st.innerText = data.msg || data.erro;
+            st.style.color = data.erro ? "red" : "#00c853";
         }
-    }
-</script>
-
+    </script>
 </body>
 </html>
