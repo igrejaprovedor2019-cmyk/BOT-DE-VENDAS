@@ -1,41 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Sirius Dashboard</title>
+    <title>Sirius Status</title>
     <style>
-        body { background: #080809; color: #fff; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .card { background: #111113; padding: 30px; border-radius: 20px; width: 350px; border: 1px solid #1f1f22; text-align: center; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #222; background: #000; color: #fff; box-sizing: border-box; }
-        button { width: 100%; padding: 15px; background: #00ff6a; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        h1 { color: #00ff6a; }
+        body { background: #080809; color: #00ff6a; font-family: sans-serif; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .status { padding: 20px; border: 1px solid #1f1f22; border-radius: 15px; background: #111113; text-align: center; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>SIRIUS PRO</h1>
-        <input type="password" id="t" placeholder="Token do Bot">
-        <input type="text" id="n" placeholder="Nome da Loja">
-        <input type="text" id="p" placeholder="Chave PIX">
-        <input type="text" id="b" placeholder="Link do Banner">
-        <button onclick="ligar()">ATIVAR BOT</button>
-        <p id="status"></p>
+    <div class="status">
+        <h1>SIRIUS V2 ONLINE</h1>
+        <p style="color: #fff;">Configure tudo via /gerenciar no Discord</p>
     </div>
-    <script>
-        async function ligar() {
-            document.getElementById('status').innerText = "⏳ Ligando...";
-            const res = await fetch('/ligar-bot', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    token: document.getElementById('t').value,
-                    nomeLoja: document.getElementById('n').value,
-                    pix: document.getElementById('p').value,
-                    banner: document.getElementById('b').value
-                })
-            });
-            const data = await res.json();
-            document.getElementById('status').innerText = data.msg === "OK" ? "✅ ONLINE!" : "❌ ERRO";
-        }
-    </script>
 </body>
 </html>
