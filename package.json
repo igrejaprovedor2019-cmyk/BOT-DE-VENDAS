@@ -1,7 +1,6 @@
 {
-  "name": "bot-vendas-sirius",
-  "version": "1.0.0",
-  "description": "Sistema de vendas profissional",
+  "name": "sirius-v2",
+  "version": "2.0.0",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
